@@ -1,0 +1,394 @@
+﻿@model ELearning.Models.StoryModel
+@{
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+    ViewBag.Title = "Stories";
+}
+
+@section Styles {
+    <style>
+        /* Optional: Add styles to make the words clickable */
+        .clickable-word {
+            cursor: pointer;
+            color: blue;
+        }
+
+            .clickable-word:hover {
+                text-decoration: underline;
+            }
+
+        .flipbook {
+            width: 50%;
+            height: 50rem;
+            position: relative;
+            margin: 20px auto;
+            perspective: 1000px;
+        }
+
+        /* Title Page (Cover) */
+        .fb-cover {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            border: 1px solid #ddd;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.6s ease;
+        }
+
+            .fb-cover.hidden {
+                opacity: 0;
+                z-index: -1;
+            }
+
+        .fb-title-content {
+            color: white;
+            font-size: 32px;
+            text-transform: uppercase;
+        }
+
+        .fb-page {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            backface-visibility: hidden;
+            transform-origin: left;
+            transition: transform 0.6s ease;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+            .fb-page.flipped {
+                transform: rotateY(-180deg);
+                z-index: 0;
+            }
+
+        .fb-content {
+            padding: 20px; /* Adjust padding if needed */
+            height: 100%;
+            position: relative;
+        }
+
+        .fb-page-title {
+            position: absolute; /* Position the small element absolutely within the page */
+            bottom: 10px; /* Distance from the bottom */
+            right: 10px; /* Distance from the right */
+            font-size: 12px; /* Adjust the font size */
+            color: #666; /* Adjust the color as per your theme */
+            font-style: italic; /* Optional styling */
+        }
+
+        .fb-readable-word {
+            cursor: pointer; /* Makes the word look clickable */
+            color: blue; /* Optional styling to differentiate clickable words */
+            text-decoration: underline;
+        }
+
+            .fb-readable-word:hover {
+                color: darkblue; /* Change color on hover */
+            }
+    </style>
+
+}
+
+<!-- Page Title -->
+<div class="page-title" data-aos="fade">
+    <div class="heading">
+        <div class="container">
+            <div class="row d-flex justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1>@ViewBag.Title</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- End Page Title -->
+<!-- Stories Story Details Section -->
+<section id="stories-story-details" class="stories-story-details section">
+    <div class="flipbook">
+        <!-- Title Page (Cover) -->
+        <div class="fb-cover">
+            <div class="fb-title-content">
+                <h1>@Model.Title</h1>
+            </div>
+        </div>
+
+        <!-- Dynamic Flipbook Pages -->
+        @foreach (var page in Model.PageContents)
+        {
+            <div class="fb-page">
+                <div class="fb-content">
+                    @*<p class="fb-page-content">@Html.Raw(page.Content)</p>*@
+                    @Html.Raw(page.Content)
+
+                    <small class="fb-page-title">@page.Title</small>
+                </div>
+            </div>
+        }
+    </div>
+    <!-- Search and Navigation Controls -->
+    <div class="text-center mb-3">
+        <input type="number" id="pageInput" placeholder="Enter page number" min="1" max="5" class="form-control form-control-sm" style="width: 200px; display: inline-block;">
+        <button type="button" id="goToPageBtn" class="btn btn-sm btn-primary">Go</button>
+    </div>
+
+
+    <div class="text-center">
+        <button type="button" id="playPauseBtn" class="btn btn-sm btn-success me-3"><i class="bi-volume-up"></i></button>
+        <button type="button" id="prevBtn" class="btn btn-sm btn-secondary">Previous</button>
+        <button type="button" id="nextBtn" class="btn btn-sm btn-secondary">Next</button>
+
+        @if (Model.CountGrade == 0)
+        {
+            <a href="@Url.Action("Question", "Story", new { id = Model.ID })" class="btn btn-sm btn-warning ms-3">Take a Quiz</a>
+        }
+        else
+        {
+            <button type="button" class="btn btn-sm btn-warning ms-3" id="btnQuizResult">View Quiz Result</button>
+        }
+    </div>
+
+</section><!-- /Stories Story Details Section -->
+
+
+@section Scripts { 
+<script>
+    let speechSynthesisInstance;
+    let currentPageIndex = 0;
+    const totalPages = @Model.PageContents.Count; // Number of pages
+    let isReading = false; // State to track if reading is active
+
+    const pages = document.querySelectorAll('.fb-page');
+    const cover = document.querySelector('.fb-cover'); // Select the cover page
+
+    // Function to start reading the entire flipbook
+    function startReading() {
+        currentPageIndex = 0; // Reset to first page
+        readPage(currentPageIndex); // Start reading from the first page
+    }
+
+    // Function to pause the reading
+    function pauseReading() {
+        if (speechSynthesis.speaking) {
+            speechSynthesis.cancel();
+        }
+        isReading = false; // Update reading state
+        document.getElementById('playPauseBtn').innerHTML = "<i class=\"bi-volume-up\"></i>"; // Change button text
+        $('#playPauseBtn').removeClass("btn-danger");
+        $('#playPauseBtn').addClass("btn-success");
+    }
+
+    // Function to start or pause reading based on the state
+    function togglePlayPause() {
+        if (isReading) {
+            pauseReading();
+        } else {
+            isReading = true;
+            document.getElementById('playPauseBtn').innerHTML = "<i class=\"bi-stop-fill\"></i>"; // Change button text
+            $('#playPauseBtn').removeClass("btn-success");
+            $('#playPauseBtn').addClass("btn-danger");
+            startReading(); // Start reading
+        }
+    }
+
+    // Function to read the content of a given page or from a specific word
+    function readPage(pageIndex, startFromWordIndex = 0) {
+        // Check if we have reached the end of the pages
+        if (pageIndex >= totalPages) {
+            console.log('Finished reading all pages.');
+            return;
+        }
+
+        const page = pages[pageIndex];
+        const contentParagraphs = page.querySelectorAll('.fb-page-content');
+
+        // Concatenate all the text from the content paragraphs into an array of words, skipping empty or non-text content
+        let wordsToRead = [];
+        contentParagraphs.forEach(paragraph => {
+            const paragraphText = paragraph.innerText.trim(); // Get text content and trim it
+
+            // Only consider paragraphs with actual text content (non-empty, no HTML-only content)
+            if (paragraphText.length > 0) {
+                wordsToRead.push(...paragraphText.split(/\s+/)); // Split text into individual words
+            }
+        });
+
+        if (wordsToRead.length === 0) {
+            console.log('No valid content to read on this page.');
+            return; // Skip reading if there's no valid content
+        }
+
+        // Only read from the specified word index
+        let textToRead = wordsToRead.slice(startFromWordIndex).join(' ');
+
+        // Create a new SpeechSynthesisUtterance for the text
+        speechSynthesisInstance = new SpeechSynthesisUtterance(textToRead);
+        speechSynthesisInstance.lang = 'en-US';
+        speechSynthesisInstance.pitch = 5;
+        speechSynthesisInstance.rate = 1;
+        speechSynthesisInstance.volume = 1;
+
+        // Add event listeners to handle when speech ends
+        speechSynthesisInstance.onend = function () {
+            if (currentPageIndex < totalPages - 1) { // Only flip if not the last page
+                currentPageIndex++; // Move to the next page
+                flipPage(); // Flip to the next page
+                readPage(currentPageIndex);  // Read the next page
+            } else {
+                isReading = false; // Finished reading all pages
+                document.getElementById('playPauseBtn').innerHTML = "<i class=\"bi-volume-up\"></i>"; // Reset button text
+                $('#playPauseBtn').removeClass("btn-danger");
+                $('#playPauseBtn').addClass("btn-success");
+            }
+            console.log(currentPageIndex);
+        };
+
+        // Start speaking
+        speechSynthesis.speak(speechSynthesisInstance);
+    }
+
+    // Function to handle word click and start reading from the clicked word
+    function handleWordClick(event) {
+        const wordIndex = event.target.dataset.wordIndex; // Get the word index from data attribute
+        if (wordIndex) {
+            const pageIndex = currentPageIndex; // Read from the current page
+            window.speechSynthesis.cancel(); // Stop any ongoing speech
+            readPage(pageIndex, parseInt(wordIndex, 10)); // Start reading from the clicked word
+        }
+    }
+
+    // Function to make words clickable
+    function makeWordsClickable(pageIndex) {
+        const page = pages[pageIndex];
+        const contentParagraphs = page.querySelectorAll('.fb-page-content');
+
+        contentParagraphs.forEach(paragraph => {
+            const paragraphText = paragraph.innerText.trim();
+
+            // Only consider paragraphs with actual text content (non-empty, no HTML-only content)
+            if (paragraphText.length > 0) {
+                const words = paragraphText.split(/\s+/); // Split paragraph into words
+
+                // Replace the paragraph content with clickable spans around each word
+                paragraph.innerHTML = words.map((word, index) => `<span class="clickable-word" data-word-index="${index}">${word}</span>`).join(' ');
+            }
+        });
+    }
+
+    // Flip page function
+    function flipPage() {
+        const current = pages[currentPageIndex];
+        const previous = pages[currentPageIndex - 1];
+
+        // Hide the cover if flipping the first page
+        if (currentPageIndex === 0) {
+            cover.classList.add('hidden'); // Hide the cover
+        } else if (currentPageIndex > 0) {
+            previous.classList.add('flipped'); // Flip previous page
+        }
+
+        // Hide all other pages except the current one
+        pages.forEach((page, index) => {
+            if (index !== currentPageIndex) {
+                page.style.display = 'none'; // Hide the other pages
+            } else {
+                page.style.display = 'block'; // Show the current page
+                page.classList.remove('flipped'); // Ensure current page is not flipped
+                makeWordsClickable(index); // Make the words of the current page clickable
+            }
+        });
+    }
+
+    // Button to go to a specific page
+    document.getElementById('goToPageBtn').addEventListener('click', function () {
+        const pageInput = document.getElementById('pageInput').value;
+        const pageNumber = parseInt(pageInput, 10);
+
+        if (pageNumber >= 1 && pageNumber <= totalPages) {
+            currentPageIndex = pageNumber - 1; // Adjust for 0-indexing
+            flipPage(); // Flip to the selected page
+            window.speechSynthesis.cancel(); // Stop current speech
+            readPage(currentPageIndex); // Read the current page
+        } else {
+            alert('Please enter a valid page number between 1 and ' + totalPages);
+        }
+    });
+
+    // Previous button functionality
+    document.getElementById('prevBtn').addEventListener('click', function () {
+        // If on the first page (page 1)
+        if (currentPageIndex === 0) {
+            // Show the cover if we are on the first page
+            cover.classList.remove('hidden'); // Show the cover
+            currentPageIndex = -1; // Set to -1 so it is clear we are on the cover now
+            window.speechSynthesis.cancel(); // Stop any ongoing speech
+            isReading = false; // Stop reading
+            document.getElementById('playPauseBtn').innerHTML = "<i class=\"bi-volume-up\"></i>"; // Reset play/pause button to play
+            $('#playPauseBtn').removeClass("btn-danger").addClass("btn-success"); // Update button styling
+            return; // Stop further execution
+        }
+
+        // If not on the first page, go to the previous page normally
+        if (currentPageIndex > 0) {
+            currentPageIndex--;
+            flipPage(); // Flip to the previous page
+            window.speechSynthesis.cancel(); // Stop current speech
+            readPage(currentPageIndex); // Read the previous page
+        }
+
+        isReading = true;
+        document.getElementById('playPauseBtn').innerHTML = "<i class=\"bi-stop-fill\"></i>"; // Set play/pause button to pause
+        $('#playPauseBtn').removeClass("btn-success").addClass("btn-danger"); // Update button styling
+    });
+
+    // Next button functionality
+    document.getElementById('nextBtn').addEventListener('click', function () {
+        if (!cover.classList.contains('hidden')) {
+            // If the cover is visible, hide the cover and go to page 1
+            cover.classList.add('hidden'); // Hide the cover
+            currentPageIndex = 0; // Move to the first page (index 0)
+            flipPage(); // Flip to the first page
+            window.speechSynthesis.cancel(); // Stop current speech
+            readPage(currentPageIndex); // Read the first page
+        } else {
+            // If already past the cover, move to the next page normally
+            if (currentPageIndex < totalPages - 1) {
+                currentPageIndex++;
+                flipPage(); // Flip to the next page
+                window.speechSynthesis.cancel(); // Stop current speech
+                readPage(currentPageIndex); // Read the next page
+            }
+        }
+
+        isReading = true;
+        document.getElementById('playPauseBtn').innerHTML = "<i class=\"bi-stop-fill\"></i>"; // Reset button text
+        $('#playPauseBtn').removeClass("btn-success");
+        $('#playPauseBtn').addClass("btn-danger");
+    });
+
+    // Global event listener for clickable words
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('clickable-word')) {
+            handleWordClick(event); // Trigger reading from the clicked word
+        }
+    });
+
+    // Play/Pause button functionality
+    document.getElementById('playPauseBtn').addEventListener('click', togglePlayPause);
+
+</script>
+
+
+
+
+
+}

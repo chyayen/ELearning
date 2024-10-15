@@ -1,0 +1,113 @@
+﻿@model ELearning.Models.StudentModel
+@{
+    ViewBag.Title = "Edit Student";
+    Random _random = new Random();
+}
+
+<div class="pagetitle">
+    <h1>@ViewBag.Title</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Home</a></li>
+            <li class="breadcrumb-item">Students</li>
+            <li class="breadcrumb-item active">@ViewBag.Title</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section"> 
+    <div class="card">
+        <div class="card-body pt-3">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="history.back()"><i class="bi bi-arrow-left-circle"></i> Back</button>
+            <hr class="border-light-subtle" />
+
+            @Html.Raw(ViewData["AlertMessage"])
+
+            @using (Html.BeginForm("EditStudent", "Admin", FormMethod.Post, new { @class = "g-3", enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken();
+                @Html.HiddenFor(m => m.ID)
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Profile Image</label>
+                    <div class="col-sm-10">
+                        <img src="~/Images/Users/@Model.DefaultImageName?v=@_random.Next()" alt="@Model.UserName" class="img-thumbnail mb-2" width="150">
+                        @Html.TextBoxFor(m => m.ImageFile, new { @class = "form-control", type = "file", accept = "image/jpg, image/png, image/jpeg" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">User Name</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.UserName, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Name</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Class</label>
+                    <div class="col-sm-10">
+                        @Html.DropDownListFor(m => m.ClassID, new SelectList(Model.ClassList, "Value", "Text"), "-- Select --", new { @class = "form-select", required = "" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Email</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Password</label>
+                    <div class="col-sm-10">
+                        @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Active</label>
+                    <div class="col-sm-10">
+                        <div class="form-check form-switch">
+                            @Html.HiddenFor(m => m.IsActive) 
+                            <input class="form-check-input" type="checkbox" id="IsActiveChkbx" @Html.Raw(Model.IsActive ? "checked" : "") />
+                            <label class="form-check-label" for="IsActiveChkbx">&nbsp;</label>
+                        </div> 
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Verify</label>
+                    <div class="col-sm-10">
+                        <div class="form-check form-switch">
+                            @Html.HiddenFor(m => m.IsVerified) 
+                            <input class="form-check-input" type="checkbox" id="IsVerifiedChkbx" @Html.Raw(Model.IsVerified ? "checked" : "") />
+                            <label class="form-check-label" for="IsVerifiedChkbx">&nbsp;</label>
+                        </div> 
+                    </div>
+                </div>
+                <div class="row mt-5">
+                    <label for="inputText" class="col-sm-2 col-form-label">&nbsp;</label>
+                    <div class="col-sm-10">
+                        <button type="submit" class="btn btn-sm btn-primary" id="btnUpdateStudent">Update</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+</section> 
+
+@section Scripts{
+    <script>
+        $(document).ready(function () {
+
+            $('#IsActiveChkbx').change(function () {
+                $('#IsActive').val($(this).is(':checked')); 
+            });
+            $('#IsVerifiedChkbx').change(function () {
+                $('#IsVerified').val($(this).is(':checked'));
+            });
+        });
+    </script>    
+    
+}
+

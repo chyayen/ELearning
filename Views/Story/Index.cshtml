@@ -1,0 +1,70 @@
+﻿@model List<ELearning.Models.StoryModel>
+@{
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+    ViewBag.Title = "Stories";
+}
+
+
+<!-- Page Title -->
+<div class="page-title" data-aos="fade">
+    <div class="heading">
+        <div class="container">
+            <div class="row d-flex justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1>@ViewBag.Title</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- End Page Title -->
+<!-- Stories Section -->
+<section id="courses" class="courses section">
+
+    <div class="container">
+
+        <div class="row">
+
+            @if (Model.Count > 0)
+            {
+                foreach (var item in Model)
+                {
+                    <div class="col-lg-4 col-md-6 d-flex align-items-stretch mb-3" data-aos="zoom-in" data-aos-delay="100">
+                        <div class="course-item">
+                            <div class="course-content">
+                                <h3><a href="@Url.Action("Detail", "Story", new { id = item.ID })">@item.Title</a></h3>
+                                <div class="description" id="course_@item.ID">@Html.Raw(item.Content)</div>
+                                <div class="trainer d-flex justify-content-between align-items-center">
+                                    <div class="trainer-profile d-flex align-items-center">
+                                        @*<img src="assets/img/trainers/trainer-1-2.jpg" class="img-fluid" alt="">*@
+                                        <a href="javascript:void(0)" class="trainer-link">By: @item.AddedByName</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- End Story Item-->
+                }
+            }
+            else
+            {
+
+            }
+
+        </div>
+
+    </div>
+
+</section><!-- /Stories Section -->
+
+@section Scripts { 
+    <script>
+        $(document).ready(function () {
+            var elements = document.querySelectorAll(`.description`);
+            elements.forEach(element => {
+                var courseid = element.id.replace('course_', '');
+                if (element.innerText.length > 100) {
+                    element.innerHTML = element.innerText.slice(0, 100) + `... <a href="/Story/Detail/${courseid}">read more</a>`;
+                }
+            });
+        });
+    </script>
+}

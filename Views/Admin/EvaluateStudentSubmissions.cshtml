@@ -1,0 +1,77 @@
+﻿@model List<ELearning.Models.StudentSubmissionModel>
+@{
+    ViewBag.Title = "Evaluate Student Submissions";
+}
+
+<div class="pagetitle">
+    <h1>@ViewBag.Title</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Home</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("ManageStories")">Stories</a></li>
+            <li class="breadcrumb-item active">@ViewBag.Title</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="card">
+        <div class="card-body pt-3">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="history.back()"><i class="bi bi-arrow-left-circle"></i> Back</button>
+            <h5 class="card-title">@Html.Raw(Model != null ? Model.Select(m => m.StoryTitle).FirstOrDefault() : "")</h5>
+            <!-- Column Chart -->
+            <div id="columnChart"></div>
+
+            <script type="text/javascript">
+                document.addEventListener("DOMContentLoaded", () => {
+                    new ApexCharts(document.querySelector("#columnChart"), {
+                        series: [{
+                            name: 'Quiz Result',
+                            data: @Html.Raw(Json.Encode(Model.OrderBy(m => m.StudentName).Select(m => m.ResultPercentage).ToArray()))
+                        }],
+                        chart: {
+                            type: 'bar',
+                            height: 400
+                        },
+                        plotOptions: {
+                            bar: {
+                                horizontal: false,
+                                columnWidth: '55%',
+                                endingShape: 'rounded'
+                            },
+                        },
+                        dataLabels: {
+                            enabled: false
+                        },
+                        stroke: {
+                            show: true,
+                            width: 2,
+                            colors: ['transparent']
+                        },
+                        xaxis: {
+                            name: 'Student Name',
+                            categories: @Html.Raw(Json.Encode(Model.OrderBy(m => m.StudentName).Select(m => m.StudentName).ToArray())),
+                        },
+                        yaxis: {
+                            title: {
+                                text: 'percentage'
+                            }
+                        },
+                        fill: {
+                            opacity: 1
+                        },
+                        tooltip: {
+                            y: {
+                                formatter: function (val) {
+                                    return val + " %"
+                                }
+                            }
+                        }
+                    }).render();
+                });
+            </script>
+            <!-- End Column Chart -->
+        </div>
+    </div>
+</section>
+

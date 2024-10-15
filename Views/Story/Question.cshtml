@@ -1,0 +1,148 @@
+﻿@model ELearning.Models.QuestionViewModel
+@{
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+    ViewBag.Title = Model.StoryTitle;
+}
+ 
+
+<!-- Page Title -->
+<div class="page-title" data-aos="fade">
+    <div class="heading">
+        <div class="container">
+            <div class="row d-flex justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1>@ViewBag.Title</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- End Page Title -->
+<!-- Stories Story Details Section -->
+<section id="stories-story-details" class="stories-story-details section">
+
+    <div class="container" data-aos="fade-up">
+        <div id="questionnaire">
+            @if (Model.Questions.Count > 0)
+            {
+                for (int i = 0; i < Model.Questions.Count; i++)
+                {
+                    <div class="mb-3">
+                        <p>@(i+1). @Model.Questions[i].Question</p>
+                        <div class="row">
+
+                            @foreach (var ans in Model.Questions[i].Answers)
+                            {
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="" name="question@(i+1)[]" id="chkAnswers_@ans.ID" data-answer-id="@ans.ID" data-question-id="@Model.Questions[i].ID" onchange="selectAnswer(@(i+1))">
+                                        <label class="form-check-label" for="chkAnswers_@ans.ID">
+                                            @ans.Option
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <button type="button" class="btn btn-sm btn-primary" id="btnSubmitAnswers">Submit Answers</button> 
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        $(".progress-bar").animate({
+            width: "75%",
+        }, 2500);
+
+        function selectAnswer(idx) {
+            var answers = document.querySelectorAll(`input[name='question${idx}[]']`);
+
+            answers.forEach(checkbox => {
+                checkbox.addEventListener("change", function (e) {
+                    // When a checkbox is checked, uncheck all others in the same group
+                    if (e.target.checked) {
+                        answers.forEach(otherCheckbox => {
+                            if (otherCheckbox !== e.target) {
+                                otherCheckbox.checked = false;
+                            }
+                        });
+                    }
+                });
+            });
+        }
+
+        function getCheckedAnswers() {
+            // Get the questionnaire element
+            const questionnaire = document.getElementById('questionnaire');
+
+            // Select all checked checkboxes within the questionnaire
+            const checkedAnswers = questionnaire.querySelectorAll('input[type="checkbox"]:checked');
+
+            // Collect the data-answer-id and data-question-id of each checked checkbox
+            const answers = [];
+            checkedAnswers.forEach(checkbox => {
+                answers.push({
+                    QuestionID: checkbox.getAttribute('data-question-id'),
+                    AnswerID: checkbox.getAttribute('data-answer-id')
+                });
+            });
+
+            // Return the array of answers
+            return answers;
+        }
+
+        // Submit Answers:
+        document.querySelector('#btnSubmitAnswers').addEventListener('click', function () {
+            var checkedAnswers = getCheckedAnswers();
+            var questionResultModel = {
+                QuestionResults: checkedAnswers,
+                StoryID: @ViewContext.RouteData.Values["id"], 
+                StudentID: @Session["UserID"],
+            };
+
+            $.ajax(
+                {
+                    type: "POST", //HTTP POST Method
+                    url: "@Url.Action("QuizResult", "Story")", // Controller/View
+                    contentType: 'application/json; charset=utf-8',
+                    data: JSON.stringify({
+                        model: questionResultModel
+                    }),
+                    dataType: 'json',
+                    beforeSend: function () {
+                        Swal.showLoading();
+                    },
+                    success: function (result) {
+                        console.log(result);
+                        if (result != null) {
+                            Swal.fire({
+                                title: "Result",
+                                icon: result.QuizAssessmentIcon,
+                                html: `
+                                    <div style="justify-content: center;display: flex;">
+                                        <div role="progressbar" aria-valuenow="${result.QuizAssessmentPercentage}" aria-valuemin="0" aria-valuemax="100" style="--value: ${result.QuizAssessmentPercentage}"></div> 
+                                    </div>
+                                    <p style="margin-top:1rem;">${result.QuizAssessmentMessage}</p>
+                                  `
+                            }).then(function () {
+                                location.href = '@Url.Action("Index", "Story")';
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "There was an error when retrieving your quiz result.",
+                            });
+                        }
+                    }
+
+                });
+        });
+
+
+    </script>
+
+
+}

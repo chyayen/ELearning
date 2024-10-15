@@ -1,0 +1,203 @@
+﻿@model ELearning.Models.StoryModel
+@{
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+    ViewBag.Title = "Stories";
+}
+
+@section Styles {
+    <style>
+        .highlight {
+            background-color: yellow;
+        }
+
+        #stopButton {
+            display: none;
+        }
+
+        .flipbook {
+            width: 50%;
+            height: 50rem;
+            position: relative;
+            margin: 20px auto;
+            perspective: 1000px;
+        }
+
+        /* Title Page (Cover) */
+        .fb-cover {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            border: 1px solid #ddd;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            transition: opacity 0.6s ease;
+        }
+
+            .fb-cover.hidden {
+                opacity: 0;
+                z-index: -1;
+            }
+
+        .fb-title-content {
+            color: white;
+            font-size: 32px;
+            text-transform: uppercase;
+        }
+
+        .fb-page {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: white;
+            border: 1px solid #ddd;
+            backface-visibility: hidden;
+            transform-origin: left;
+            transition: transform 0.6s ease;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+
+            .fb-page.flipped {
+                transform: rotateY(-180deg);
+                z-index: 0;
+            }
+
+        .fb-content {
+            padding: 20px; /* Adjust padding if needed */
+            height: 100%;
+            position: relative;
+        }
+
+        .fb-page-title {
+            position: absolute; /* Position the small element absolutely within the page */
+            bottom: 10px; /* Distance from the bottom */
+            right: 10px; /* Distance from the right */
+            font-size: 12px; /* Adjust the font size */
+            color: #666; /* Adjust the color as per your theme */
+            font-style: italic; /* Optional styling */
+        }
+
+        .fb-readable-word {
+            cursor: pointer; /* Makes the word look clickable */
+            color: blue; /* Optional styling to differentiate clickable words */
+            text-decoration: underline;
+        }
+
+            .fb-readable-word:hover {
+                color: darkblue; /* Change color on hover */
+            }
+    </style>
+
+}
+
+<!-- Page Title -->
+<div class="page-title" data-aos="fade">
+    <div class="heading">
+        <div class="container">
+            <div class="row d-flex justify-content-center text-center">
+                <div class="col-lg-8">
+                    <h1>@ViewBag.Title</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!-- End Page Title -->
+<!-- Stories Story Details Section -->
+<section id="stories-story-details" class="stories-story-details section">
+    <div class="flipbook">
+        <!-- Title Page (Cover) -->
+        <div class="fb-cover">
+            <div class="fb-title-content">
+                <h1>@Model.Title</h1>
+            </div>
+        </div>
+
+        <!-- Dynamic Flipbook Pages -->
+        @foreach (var page in Model.PageContents)
+        {
+            <div class="fb-page">
+                <div class="fb-content">
+                    @*<p class="fb-page-content">@Html.Raw(page.Content)</p>*@
+                    @Html.Raw(page.Content)
+
+                    <small class="fb-page-title">@page.Title</small>
+                </div>
+            </div>
+        }
+    </div>
+    <!-- Search and Navigation Controls -->
+    <div class="text-center mb-3">
+        <input type="number" id="pageInput" placeholder="Enter page number" min="1" max="5" class="form-control form-control-sm" style="width: 200px; display: inline-block;">
+        <button type="button" id="goToPageBtn" class="btn btn-sm btn-primary">Go</button>
+    </div>
+
+
+    <div class="text-center">
+        <button type="button" id="playPauseBtn" class="btn btn-sm btn-success me-3"><i class="bi-volume-up"></i></button>
+        <button type="button" id="prevBtn" class="btn btn-sm btn-secondary">Previous</button>
+        <button type="button" id="nextBtn" class="btn btn-sm btn-secondary">Next</button>
+
+        @if (Model.CountGrade == 0)
+        {
+            <a href="@Url.Action("Question", "Story", new { id = Model.ID })" class="btn btn-sm btn-warning ms-3">Take a Quiz</a>
+        }
+        else
+        {
+            <button type="button" class="btn btn-sm btn-warning ms-3" id="btnQuizResult">View Quiz Result</button>
+        }
+    </div>
+
+</section><!-- /Stories Story Details Section -->
+
+
+@section Scripts { 
+    <script src="~/Scripts/tts.js"></script>
+
+    <script>
+         // Submit Answers:
+        document.querySelector('#btnQuizResult').addEventListener('click', function () {
+            $.ajax(
+                {
+                    type: "GET", //HTTP POST Method
+                    url: "@Url.Action("ViewQuizResult", "Story")", // Controller/View
+                    contentType: 'application/json; charset=utf-8',
+                    data: { storyid: @ViewContext.RouteData.Values["id"] },
+                    dataType: 'json',
+                    beforeSend: function () {
+                        Swal.showLoading();
+                    },
+                    success: function (result) {
+                        console.log(result);
+                        if (result != null) {
+                            Swal.fire({
+                                title: "Result",
+                                icon: result.QuizAssessmentIcon,
+                                html: `
+                                    <div style="justify-content: center;display: flex;">
+                                        <div role="progressbar" aria-valuenow="${result.QuizAssessmentPercentage}" aria-valuemin="0" aria-valuemax="100" style="--value: ${result.QuizAssessmentPercentage}"></div>
+                                    </div>
+                                    <p style="margin-top:1rem;">${result.QuizAssessmentMessage}</p>
+                                  `
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "error",
+                                title: "There was an error when retrieving your quiz result.",
+                            });
+                        }
+                    }
+
+                });
+        });
+    </script>
+
+
+}

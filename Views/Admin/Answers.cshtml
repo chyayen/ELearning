@@ -1,0 +1,95 @@
+﻿@model ELearning.Models.AnswerViewModel
+@{
+    ViewBag.Title = $"Add Quiz Questions to {Model.CourseTitle}";
+}
+
+<div class="pagetitle">
+    <h1>@ViewBag.Title</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Home</a></li>
+            <li class="breadcrumb-item"><a href="@Url.Action("ManageCourses")">Courses</a></li>
+            <li class="breadcrumb-item active">@ViewBag.Title</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="card">
+        <div class="card-body pt-3"> 
+            <div class="table-responsive-sm">
+                <table class="table" id="tblAnswers">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">Question</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Answers.Count > 0)
+                        {
+                            foreach (var item in Model.Answers)
+                            {
+                                <tr id="tr_@item.ID">
+                                    <td class="align-middle">@item.Question</td>
+                                    <td class="align-middle">
+                                        <button type="button" class="btn btn-sm btn-success" onclick="updateQuestion(@item.ID)">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="deleteQuestion(@item.ID)">Delete</button>
+                                    </td>
+                                </tr>
+                            }
+                        } 
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" class="text-center align-middle">
+                                <button type="button" class="btn btn-sm btn-primary" id="btnAdd">
+                                    <i class="bi bi-plus-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+        </div>
+    </div>  
+
+</section>
+
+
+@section Scripts {
+    <script> 
+        $(document).ready(function () {
+            var rowIndex = 1, rowid = 1;
+
+            // Function to add a new row
+            $('#btnAdd').click(function () { 
+                var newRow = `<tr>
+                                <td><input type="text" name="items[${rowid}]" class="form-control" /></td>
+                                <td><button type="button" class="btn btn-danger btn-remove"><i class="bi bi-x-circle"></i></button></td>
+                              </tr>`;
+                $('#tblQuestions tbody').append(newRow);
+                rowIndex++;
+                rowid++;
+
+                //if (rowIndex > 10) {
+                //    $("#btnAdd").prop("disabled", true);
+                //} 
+
+            });
+
+            // Function to remove a row
+            $('#tblAnswers').on('click', '.btn-remove', function () {
+                $(this).closest('tr').remove();
+                rowIndex--;
+
+                //if (rowIndex < 11) {
+                //    $("#btnAdd").prop("disabled", false);
+                //} 
+            });
+
+        });
+    </script>
+
+}

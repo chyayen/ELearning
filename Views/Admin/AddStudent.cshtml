@@ -1,0 +1,67 @@
+﻿@model ELearning.Models.StudentModel
+@{
+    ViewBag.Title = "Add New Student";
+}
+
+<div class="pagetitle">
+    <h1>@ViewBag.Title</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Home</a></li>
+            <li class="breadcrumb-item">Students</li>
+            <li class="breadcrumb-item active">@ViewBag.Title</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+
+    <div class="card">
+        <div class="card-body pt-3">
+            @Html.Raw(ViewData["AlertMessage"])
+
+            @using (Html.BeginForm("AddStudent", "Admin", FormMethod.Post, new { @class = "g-3", enctype = "multipart/form-data" }))
+            {
+                @Html.AntiForgeryToken();
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">User Name</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.UserName, new { @class = "form-control", required = "" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Name</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control", required = "" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Email</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Class</label>
+                    <div class="col-sm-10">
+                        @Html.DropDownListFor(m => m.ClassID, new SelectList(Model.ClassList, "Value", "Text"), "-- Select --", new { @class = "form-select", required = "" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Profile Image</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.ImageFile, new { @class = "form-control", type = "file", accept = "image/jpg, image/png, image/jpeg" })
+                    </div>
+                </div>
+                <div class="row mt-5">
+                    <label for="inputText" class="col-sm-2 col-form-label">&nbsp;</label>
+                    <div class="col-sm-10">
+                        <button type="submit" class="btn btn-sm btn-primary" id="btnAddStudent">Add</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+</section>
+

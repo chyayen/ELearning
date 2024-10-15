@@ -1,0 +1,273 @@
+﻿@model ELearning.Models.ClassViewModel
+@using PagedList.Mvc;
+@{
+    ViewBag.Title = "Manage Classes";
+}
+
+<div class="pagetitle">
+    <h1>@ViewBag.Title</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Home</a></li>
+            <li class="breadcrumb-item active">@ViewBag.Title</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+    <div class="card">
+        <div class="card-body pt-3">
+            <div class="float-end mb-3">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addNewClassModal">
+                    Add New Class
+                </button>
+            </div>
+
+            @Html.Raw(ViewData["AlertMessage"])
+            <div class="table-responsive-sm">
+                <table class="table" id="tblClasses">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">Name</th>
+                            <th scope="col">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="classesTbody">
+                        @if (Model.Classes.Count > 0)
+                        {
+                            foreach (var item in Model.Classes)
+                            {
+                                <tr id="tr_@item.ID">
+                                    <td class="align-middle editable">@item.Name</td>
+                                    <td class="align-middle">
+                                        <button type="button" class="btn btn-sm btn-success edit-button" data-cid="@item.ID">Edit</button>
+                                        <button type="button" class="btn btn-sm btn-danger delete-button" onclick="deleteClass(@item.ID)">Delete</button> 
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="align-middle text-center">No records found.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.Classes.Count > 0)
+            {
+                @Html.Raw("Page" + (Model.Classes.PageCount < Model.Classes.PageNumber ? 0 : Model.Classes.PageNumber) + " of " + Model.Classes.PageCount)
+                @Html.PagedListPager(Model.Classes, page => Url.Action("ManageClasses", new { page }))
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Add New Class Modal -->
+<div class="modal fade" id="addNewClassModal" tabindex="-1" aria-labelledby="addNewClassModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="addNewClassModalLabel">Add New Class</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addClassForm">
+                    <div class="mb-3">
+                        <label for="recipient-name" class="col-form-label">Name:</label> 
+                        @Html.TextBox("Name", "", new { @class = "form-control" })
+                    </div> 
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="addClass();">Add</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts {
+    <script>
+
+        $('#tblClasses').on('click', '.edit-button', function () {
+            var $row = $(this).closest('tr');
+            var $cells = $row.find('td.editable');
+
+            $(this).removeClass('edit-button').addClass('save-button').text('Save');
+            $('<button type="button" class="btn btn-sm btn-warning ms-1 me-3 cancel-button">Cancel</button>').insertAfter($(this));
+
+            $cells.each(function () {
+                var $cell = $(this);
+                var currentText = $cell.text();
+                $cell.html('<input type="text" class="form-control" value="' + currentText + '"/>');
+                val_txtbx = currentText;
+            });
+             
+            $(".delete-button").prop('disabled', true);
+            $(".add-button").prop('disabled', true);
+        });
+
+        // Handle cancel button click
+        $('#tblClasses').on('click', '.cancel-button', function () {
+            var $row = $(this).closest('tr');
+            var $cells = $row.find('td.editable');
+
+            $row.find('.save-button').removeClass('save-button').addClass('edit-button').text('Edit');
+            $(this).remove();
+
+            $cells.each(function () {
+                var $cell = $(this);
+                var currentText = $cell.find('input').val();
+                $cell.text(val_txtbx);
+            });
+             
+            $(".delete-button").prop('disabled', false);
+            $(".add-button").prop('disabled', false);
+        });
+
+        // Handle save button click
+        $('#tblClasses').on('click', '.save-button', function () {
+                var $row = $(this).closest('tr');
+                var classid = $(this).data("cid"); 
+                var $txtbx = $(this).closest('tr').find('input[type="text"]');   
+
+                $.ajax(
+                    {
+                        type: "POST", //HTTP POST Method
+                        url: "@Url.Action("SaveClass", "Admin")", // Controller/View
+                        contentType: 'application/json; charset=utf-8',
+                        data: JSON.stringify({
+                            classid: classid, 
+                            edit_text: $txtbx.val(),
+                            action: "update"
+                        }),
+                        dataType: 'json',
+                        beforeSend: function () {
+                            Swal.showLoading();
+                        },
+                        success: function(result) {
+                            if (result.success) {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: result.message,
+                                }).then(function () {
+                                    var $cells = $row.find('td.editable');
+
+                                    $row.find('.save-button').removeClass('save-button').addClass('edit-button').text('Edit');
+                                    $row.find('.cancel-button').remove();
+
+                                    $cells.each(function () {
+                                        var $cell = $(this);
+                                        var currentText = $cell.find('input').val();
+                                        $cell.text(currentText);
+                                    });
+                                       
+                                    $(".delete-button").prop('disabled', false);
+                                    $(".add-button").prop('disabled', false);
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: "error",
+                                    title: result.message,
+                                });
+                            }
+                        }
+
+                    });
+            });
+
+
+        function addClass() {
+            var classModel = { //Passing data
+                Name: $("#Name").val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("AddClass", "Admin")',
+                type: 'POST',
+                contentType: 'application/json; charset=utf-8',
+                data: JSON.stringify({
+                    model: classModel,
+                    action: "add"
+                }),
+                success: function (result) {
+                    if (result.success) {
+                        //$('#classesTbody').append('');
+                        //$('#classesTbody').append(
+                        //    `<tr>
+                        //    <td>${classModel.Name}</td>
+                        //    <td class="align-middle">
+                        //        <a href="/Admin/EditClass/" class="btn btn-sm btn-success">Edit</a>
+                        //        <button class="btn btn-sm btn-danger" onclick="deleteClass()">Delete</button>
+                        //    </td>
+                        // </tr>`
+                        //);
+                        $('#addNewClassModal').modal('hide');
+                        $('#addClassForm')[0].reset();
+                        location.reload();
+                    }
+                },
+                error: function () {
+                    alert('Error adding item.');
+                }
+            });
+        }
+
+        function deleteClass(classid) {
+            var classModel = { //Passing data
+                ID: classid,
+            };
+
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, delete it!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax(
+                        {
+                            type: "POST", //HTTP POST Method
+                            url: "@Url.Action("SaveClass", "Admin")", // Controller/View
+                            contentType: 'application/json; charset=utf-8',
+                            data: JSON.stringify({
+                                classid: classid,
+                                edit_text: "",
+                                action: "delete"
+                            }),
+                            dataType: 'json',
+                            beforeSend: function () {
+                                Swal.showLoading();
+                            },
+                            success: function (result) {
+                                if (result.success) {
+                                    Swal.fire({
+                                        title: "Deleted!",
+                                        text: "Class has been deleted.",
+                                        icon: "success"
+                                    }).then(function () {
+                                        $(`#tr_${classid}`).remove();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: "error",
+                                        title: result.message,
+                                    });
+                                }
+                            }
+
+                        });
+                }
+            });
+        }
+    </script>
+
+}
+

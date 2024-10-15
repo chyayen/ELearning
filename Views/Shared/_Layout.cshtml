@@ -1,0 +1,241 @@
+﻿@{ 
+    var countNotVeriedStudents = (int)Session["CountNotVeriedStudents"];
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+
+    <title>@ViewBag.Title - LittleLearners</title>
+    <meta content="" name="description">
+    <meta content="" name="keywords">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+
+    <!-- Vendor CSS Files -->
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet">
+    <link href="~/Content/admin_template/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="~/Content/admin_template/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+    <link href="~/Content/admin_template/vendor/quill/quill.snow.css" rel="stylesheet">
+    <link href="~/Content/admin_template/vendor/quill/quill.bubble.css" rel="stylesheet">
+    <link href="~/Content/admin_template/vendor/remixicon/remixicon.css" rel="stylesheet">
+    <link href="~/Content/admin_template/vendor/simple-datatables/style.css" rel="stylesheet">
+    <link href="~/Scripts/sweetalert2/sweetalert2.min.css" rel="stylesheet">
+    <link href="~/Content/PagedList.css" rel="stylesheet" />
+
+    <!-- Template Main CSS File -->
+    <link href="~/Content/admin_template/css/style.css" rel="stylesheet">
+
+    <!-- Custom CSS File -->
+    @RenderSection("styles", required: false)
+</head>
+<body>
+    <!-- ======= Header ======= -->
+    <header id="header" class="header fixed-top d-flex align-items-center">
+
+        <div class="d-flex align-items-center justify-content-between">
+            <a href="@Url.Action("Index", "Admin")" class="logo d-flex align-items-center">
+                @*<img src="~/Content/admin_template/img/logo.png" alt="">*@
+                <span class="d-none d-lg-block text-uppercase">LittleLearners</span>
+            </a>
+            <i class="bi bi-list toggle-sidebar-btn"></i>
+        </div><!-- End Logo -->
+
+
+        <nav class="header-nav ms-auto">
+            <ul class="d-flex align-items-center">
+
+                <li class="nav-item dropdown">
+
+                    <a class="nav-link nav-icon" href="#" data-bs-toggle="dropdown">
+                        <i class="bi bi-bell"></i>
+                        <span class="badge bg-warning badge-number">@Html.Raw(countNotVeriedStudents > 0 ? "<i class=\"bi bi-exclamation-lg\"></i>" : "")</span>
+                    </a><!-- End Notification Icon -->
+
+                @if (countNotVeriedStudents > 0)
+                {
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow notifications">
+                        <li class="dropdown-header">
+                            You have pending notification
+                            <a href="@Url.Action("ManageStudents", "Admin", new { status = 0 })"><span class="badge rounded-pill bg-primary p-2 ms-2">View</span></a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li class="notification-item">
+                            <i class="bi bi-exclamation-circle text-warning"></i>
+                            <div>
+                                <h4>Verify Students</h4>
+                                <p>There were students who need account verification.</p> 
+                            </div>
+                        </li> 
+
+                    </ul><!-- End Notification Dropdown Items -->
+                }
+
+                </li><!-- End Notification Nav -->
+
+                <li class="nav-item dropdown pe-3">
+                    <a class="nav-link dropdown-toggle" href="javascript:void(0)" role="button" data-bs-toggle="dropdown" aria-expanded="false" id="bd-theme">
+                        <span class="theme-icon-active"><i class=""></i></span> 
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="javascript:void(0)" data-bs-theme-value="light" aria-pressed="false"><i class="bi-brightness-high-fill"></i> Light</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" data-bs-theme-value="dark" aria-pressed="true"><i class="bi-moon-stars-fill"></i> Dark</a></li>
+                        <li><a class="dropdown-item" href="javascript:void(0)" data-bs-theme-value="auto" aria-pressed="false"><i class="bi-circle-half"></i> Auto</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown pe-3">
+
+                    <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
+                        <img src="~/Images/Users/@Session["DefaultImageName"]" alt="Profile" class="rounded-circle">
+                        <span class="d-none d-md-block dropdown-toggle ps-2">@Session["UserName"]</span>
+                    </a><!-- End Profile Iamge Icon -->
+
+                    <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+                        <li class="dropdown-header">
+                            <h6>@Session["FullName"]</h6>
+                            <span class="text-uppercase">@Session["UserType"]</span>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        @*<li>
+                            <a class="dropdown-item d-flex align-items-center" href="#">
+                                <i class="bi bi-person"></i>
+                                <span>My Profile</span>
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>*@
+
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="@Url.Action("AccountSettings", "Admin", new { id = Session["UserID"] })">
+                                <i class="bi bi-gear"></i>
+                                <span>Account Settings</span>
+                            </a>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="@Url.Action("Logout", "Admin")" id="btnLogout">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Sign Out</span>
+                            </a>
+                        </li>
+
+                    </ul><!-- End Profile Dropdown Items -->
+                </li><!-- End Profile Nav -->
+
+            </ul>
+        </nav><!-- End Icons Navigation -->
+
+    </header><!-- End Header -->
+    <!-- ======= Sidebar ======= -->
+    <aside id="sidebar" class="sidebar">
+
+        <ul class="sidebar-nav" id="sidebar-nav">
+
+            <li class="nav-item">
+                <a class="nav-link " href="@Url.Action("Index", "Admin")">
+                    <i class="bi bi-grid"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li><!-- End Dashboard Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" data-bs-target="#courses-nav" data-bs-toggle="collapse" href="#">
+                    <i class="bi bi-journal-text"></i><span>Stories</span><i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul id="courses-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                    <li>
+                        <a href="@Url.Action("UploadStory", "Admin")">
+                            <i class="bi bi-circle"></i><span>Upload Story</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("AddStory", "Admin")">
+                            <i class="bi bi-circle"></i><span>Add New Story</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="@Url.Action("ManageStories", "Admin")">
+                            <i class="bi bi-circle"></i><span>Manage Stories</span>
+                        </a>
+                    </li>
+                </ul>
+            </li><!-- End Stories Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" data-bs-target="#class-nav" data-bs-toggle="collapse" href="#">
+                    <i class="bi bi-house"></i><span>Classes</span><i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul id="class-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">  
+                    <li>
+                        <a href="@Url.Action("ManageClasses", "Admin")">
+                            <i class="bi bi-circle"></i><span>Manage Classes</span>
+                        </a>
+                    </li>
+                </ul>
+            </li><!-- End Stories Nav -->
+
+            <li class="nav-item">
+                <a class="nav-link collapsed" data-bs-target="#students-nav" data-bs-toggle="collapse" href="#">
+                    <i class="bi bi-people"></i><span>Students</span><i class="bi bi-chevron-down ms-auto"></i>
+                </a>
+                <ul id="students-nav" class="nav-content collapse " data-bs-parent="#sidebar-nav">
+                    <li>
+                        <a href="@Url.Action("ManageStudents", "Admin")">
+                            <i class="bi bi-circle"></i><span>Manage Students</span>
+                        </a> 
+                    </li>
+                </ul>
+            </li><!-- End Students Nav -->
+
+        </ul>
+
+    </aside><!-- End Sidebar-->
+
+    <main id="main" class="main">
+        @RenderBody()
+
+    </main><!-- End #main -->
+    <!-- ======= Footer ======= -->
+    <footer id="footer" class="footer">
+        <div class="copyright">
+            &copy; Copyright @DateTime.Now.Year <strong><span class="text-uppercase">LittleLearners</span></strong>. All Rights Reserved
+        </div>
+    </footer><!-- End Footer -->
+
+    <a href="#" class="back-to-top d-flex align-items-center justify-content-center"><i class="bi bi-arrow-up-short"></i></a>
+
+    <!-- Vendor JS Files -->
+    <script src="../../Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Scripts/bootstrap.bundle.min.js"></script>
+    <script src="~/Scripts/bootstrap-color-mode.js"></script>
+    <script src="~/Content/admin_template/vendor/apexcharts/apexcharts.min.js"></script>
+    <script src="~/Content/admin_template/vendor/chart.js/chart.umd.js"></script>
+    <script src="~/Content/admin_template/vendor/echarts/echarts.min.js"></script>
+    <script src="~/Content/admin_template/vendor/quill/quill.js"></script>
+    <script src="~/Content/admin_template/vendor/simple-datatables/simple-datatables.js"></script>
+    <script src="~/Content/admin_template/vendor/tinymce/tinymce.min.js"></script>
+    <script src="~/Scripts/sweetalert2/sweetalert2.all.min.js"></script>
+
+
+    <!-- Template Main JS File -->
+    <script src="~/Content/admin_template/js/main.js"></script>
+
+    <!-- Custom JS File -->
+    @RenderSection("scripts", required: false)
+</body>
+</html>

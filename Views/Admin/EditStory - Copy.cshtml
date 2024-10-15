@@ -1,0 +1,155 @@
+﻿@model ELearning.Models.StoryModel
+@{
+    ViewBag.Title = "Edit Story";
+}
+
+<div class="pagetitle">
+    <h1>@ViewBag.Title</h1>
+    <nav>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="@Url.Action("Index")">Home</a></li>
+            <li class="breadcrumb-item">Stories</li>
+            <li class="breadcrumb-item active">@ViewBag.Title</li>
+        </ol>
+    </nav>
+</div><!-- End Page Title -->
+
+<section class="section">
+
+    <div class="card">
+        <div class="card-body pt-3">
+            <button type="button" class="btn btn-sm btn-secondary" onclick="history.back()"><i class="bi bi-arrow-left-circle"></i> Back</button>
+            <hr class="border-light-subtle" />
+            <form id="formAddStory" class="g-3">
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Title</label>
+                    <div class="col-sm-10">
+                        @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Class</label>
+                    <div class="col-sm-10">
+                        @Html.DropDownList("ClassID", new SelectList(Model.ClassList, "Value", "Text", "-- Select --"), new { @class = "form-select" })
+                    </div>
+                </div>
+                @*<div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Content</label>
+                    <div class="col-sm-10">
+                        <div class="quill-editor-custom" id="StoryContent"></div>
+                    </div>
+                </div>*@
+                <div class="row mb-3">
+                    <label for="inputText" class="col-sm-2 col-form-label">Content</label>
+                    <div class="col-sm-10">
+                        @Html.TextAreaFor(m => m.Content, new { @class = "form-control", rows = "20" })
+                    </div>
+                </div>
+                <div class="row mt-5">
+                    <label for="inputText" class="col-sm-2 col-form-label">&nbsp;</label>
+                    <div class="col-sm-10">
+                        <button type="button" class="btn btn-sm btn-success" id="btnUpdateStory">Update</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+</section>
+
+@section Scripts {
+    <script>
+
+        $(document).ready(function () {
+            @*var formats = [
+                'background',
+                'bold',
+                'color',
+                'font',
+                'code',
+                'italic',
+                'link',
+                'size',
+                'strike',
+                'script',
+                'underline',
+                'blockquote',
+                'header',
+                'indent',
+                'list',
+                'align',
+                'direction',
+                'code-block',
+                'formula'
+                // 'image'
+                // 'video'
+            ];
+            var quill = new Quill('#StoryContent', {
+                modules: {
+                    //toolbar: [
+                    //    [{ header: [1, 2, false] }],
+                    //    ['bold', 'italic', 'underline'],
+                    //    ['code-block']
+                    //]
+                    toolbar: [
+                        ['bold', 'italic'],
+                        ['link', 'blockquote', 'code-block'],
+                        [{ list: 'ordered' }, { list: 'bullet' }],
+                    ],
+                },
+                placeholder: 'Story content..',
+                theme: 'snow',
+                formats: formats
+            });
+
+
+            var editor = document.getElementsByClassName('ql-editor');
+            editor[0].innerHTML = `@Html.Raw(Model.Content)`;*@
+
+
+            //function will be called on button click having id btnUpdateStory
+            $("#btnUpdateStory").click(function () {
+                var storyModel = { //Passing data
+                    ID: @Model.ID,
+                    Title: $("#Title").val(), //Reading text box values using Jquery
+                    ClassID: $("#ClassID").val(),
+                    Content: $("#Content").val(),
+                    //Content: $("#StoryContent > .ql-editor").html()
+                }; 
+
+                $.ajax(
+                    {
+                        type: "POST", //HTTP POST Method
+                        url: "@Url.Action("SaveStory", "Admin")", // Controller/View 
+                        contentType: 'application/json; charset=utf-8',
+                        data: JSON.stringify({
+                            model: storyModel,
+                            action: "update"
+                        }),
+                        dataType: 'json',
+                        beforeSend: function () {
+                            Swal.showLoading();
+                        },
+                        success: function(result) {
+                            if (result.success) {
+                                Swal.fire({
+                                    icon: "success",
+                                    title: result.message,
+                                }).then(function () {
+                                    window.location.href = "@Url.Action("ManageStories", "Admin")";
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: "error",
+                                    title: result.message,
+                                });
+                            }
+                        }
+
+                    });
+            });
+        });
+    </script>
+
+}
+
